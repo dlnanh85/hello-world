@@ -1,6 +1,8 @@
+# STABLE VERSION 1
+
 #!/data/data/com.termux/files/usr/bin/sh
 #
-# backup-trill-assets.sh
+# extract-tiktok-effect.sh
 # Zip /data/data/com.ss.android.ugc.trill/app_assets and upload to Google Drive
 # via rclone.
 #
@@ -12,13 +14,13 @@
 #   rclone config           # set up your Google Drive remote
 #
 # Usage:
-#   chmod +x backup-trill-assets.sh
-#   ./backup-trill-assets.sh
+#   chmod +x extract-tiktok-effect.sh
+#   ./extract-tiktok-effect.sh
 #
 # Optional environment overrides:
-#   REMOTE=mygdrive:Backups ./backup-trill-assets.sh
-#   SRC=/data/data/some.other.pkg/files ./backup-trill-assets.sh
-#   KEEP_LOCAL=1 ./backup-trill-assets.sh    # don't delete local zip after upload
+#   REMOTE=mygdrive:Backups ./extract-tiktok-effect.sh
+#   SRC=/data/data/some.other.pkg/files ./extract-tiktok-effect.sh
+#   KEEP_LOCAL=1 ./extract-tiktok-effect.sh    # don't delete local zip after upload
 #
 
 set -eu
