@@ -23,6 +23,15 @@
 
 set -eu
 
+# ---------- resolve our own absolute path ----------
+# su changes cwd before running the inner command, so $0 must be absolute
+# before we re-exec ourselves through su/nsenter.
+case "$0" in
+    /*) SELF="$0" ;;
+    *)  SELF="$PWD/$0" ;;
+esac
+[ -r "$SELF" ] || { echo "Cannot locate self at $SELF" >&2; exit 1; }
+
 # ---------- config ----------
 SRC="${SRC:-/data/data/com.ss.android.ugc.trill/app_assets}"
 REMOTE="${REMOTE:-gdrive:trill-backups}"      # <-- edit if your remote is named differently
@@ -52,14 +61,14 @@ if [ ! -d "$SRC" ]; then
         [ -n "$NSENTER" ] || die "nsenter not installed. Run: pkg install util-linux"
         log "Re-executing under su + nsenter (via stdin, bstk/su has no -c)..."
         exec su <<EOF
-exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' "$SH_BIN" '$0'
+exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' "$SH_BIN" '$SELF'
 EOF
     fi
 
     # Already root but wrong namespace.
     if [ -n "$NSENTER" ]; then
         log "Already root, entering init's mount namespace..."
-        exec "$NSENTER" -t 1 -m -- "$SH_BIN" "$0"
+        exec "$NSENTER" -t 1 -m -- "$SH_BIN" "$SELF"
     fi
 
     die "Cannot access $SRC. Need nsenter; run: pkg install util-linux"
