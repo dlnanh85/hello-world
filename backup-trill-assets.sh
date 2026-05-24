@@ -39,21 +39,31 @@ die() { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 
 # ---------- self-elevation ----------
 # If we can't see the source dir, we're either not root or in the wrong mount
-# namespace. Escalate transparently.
+# namespace. Escalate transparently. Note: bstk/su doesn't support `-c`, so we
+# feed the command via stdin instead. nsenter switches us into init's mount
+# namespace (PID 1), which has the global view of /data/data.
 if [ ! -d "$SRC" ]; then
-    if [ "$(id -u)" -ne 0 ]; then
-        log "Source not visible. Re-executing under 'su --mount-master'..."
-        # Pass overrides through the environment via the command string.
-        exec su --mount-master -c "SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' sh '$0'"
-    fi
-    if command -v nsenter >/dev/null 2>&1; then
-        log "Already root, but wrong namespace. Entering init's mount namespace..."
-        exec nsenter -t 1 -m -- sh "$0"
-    fi
-    die "Cannot access $SRC. Need root + global mount namespace, and either 'su --mount-master' or 'nsenter' available."
-fi
+    # Locate nsenter while we're still in Termux's PATH; after su, PATH may not
+    # include /data/data/com.termux/files/usr/bin.
+    NSENTER="$(command -v nsenter || true)"
+    SH_BIN="$(command -v sh)"
 
-log "hehee"
+    if [ "$(id -u)" -ne 0 ]; then
+        [ -n "$NSENTER" ] || die "nsenter not installed. Run: pkg install util-linux"
+        log "Re-executing under su + nsenter (via stdin, bstk/su has no -c)..."
+        exec su <<EOF
+exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' "$SH_BIN" '$0'
+EOF
+    fi
+
+    # Already root but wrong namespace.
+    if [ -n "$NSENTER" ]; then
+        log "Already root, entering init's mount namespace..."
+        exec "$NSENTER" -t 1 -m -- "$SH_BIN" "$0"
+    fi
+
+    die "Cannot access $SRC. Need nsenter; run: pkg install util-linux"
+fi
 
 # ---------- prerequisite tools ----------
 # Prefer Termux-installed binaries on PATH.
