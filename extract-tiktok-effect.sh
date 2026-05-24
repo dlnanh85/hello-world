@@ -34,10 +34,10 @@ esac
 
 # ---------- config ----------
 SRC="${SRC:-/data/data/com.ss.android.ugc.trill/app_assets}"
-REMOTE="${REMOTE:-gdrive:trill-backups}"      # <-- edit if your remote is named differently
+REMOTE="${REMOTE:-gdrive:tiktok-effects}"      # <-- edit if your remote is named differently
 WORK_DIR="${WORK_DIR:-/data/data/com.termux/files/home}"
 TS="$(date +%Y%m%d-%H%M%S)"
-ZIP_NAME="trill-assets-${TS}.zip"
+ZIP_NAME="tiktok-effects-${TS}.zip"
 ZIP_PATH="${WORK_DIR}/${ZIP_NAME}"
 KEEP_LOCAL="${KEEP_LOCAL:-0}"
 
