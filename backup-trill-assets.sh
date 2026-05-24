@@ -46,11 +46,6 @@ if [ ! -d "$SRC" ]; then
         # Pass overrides through the environment via the command string.
         exec su --mount-master -c "SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' sh '$0'"
     fi
-    if command -v nsenter >/dev/null 2>&1; then
-        log "Already root, but wrong namespace. Entering init's mount namespace..."
-        exec nsenter -t 1 -m -- sh "$0"
-    fi
-    die "Cannot access $SRC. Need root + global mount namespace, and either 'su --mount-master' or 'nsenter' available."
 fi
 
 # ---------- prerequisite tools ----------
