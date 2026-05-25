@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/data/data/com.termux/files/usr/bin/sh
 #
 # extract-tiktok-effect.sh
 # Extract TikTok effect previews from a rooted BlueStacks instance:
