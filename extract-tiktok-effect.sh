@@ -56,7 +56,20 @@ die()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 # namespace. Escalate transparently. Note: bstk/su doesn't support `-c`, so we
 # feed the command via stdin instead. nsenter switches us into init's mount
 # namespace (PID 1), which has the global view of /data/data.
+#
+# _ELEVATED guard: we only ever elevate once. If after one round of su+nsenter
+# we still can't see SRC, the directory genuinely doesn't exist (e.g. TikTok
+# hasn't been opened in BlueStacks yet) — fail loudly instead of looping.
 if [ ! -d "$SRC" ]; then
+    if [ "${_ELEVATED:-0}" = "1" ]; then
+        die "Source $SRC not found even after switching to init's mount namespace.
+   Likely causes:
+     * TikTok hasn't been opened in BlueStacks yet (no app_assets created).
+     * TikTok has loaded zero effects so far.
+     * The package name is different (e.g. com.zhiliaoapp.musically for global build).
+   Diagnose with: su -c 'ls /data/data/ | grep -iE \"trill|tiktok|musically\"'"
+    fi
+
     # Locate nsenter while we're still in Termux's PATH; after su, PATH may not
     # include /data/data/com.termux/files/usr/bin.
     NSENTER="$(command -v nsenter || true)"
@@ -66,14 +79,14 @@ if [ ! -d "$SRC" ]; then
         [ -n "$NSENTER" ] || die "nsenter not installed. Run: pkg install util-linux"
         log "Re-executing under su + nsenter (via stdin, bstk/su has no -c)..."
         exec su <<EOF
-exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' KEEP_RESULTS='$KEEP_RESULTS' "$SH_BIN" '$SELF'
+exec "$NSENTER" -t 1 -m -- env _ELEVATED=1 SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' KEEP_RESULTS='$KEEP_RESULTS' "$SH_BIN" '$SELF'
 EOF
     fi
 
     # Already root but wrong namespace.
     if [ -n "$NSENTER" ]; then
         log "Already root, entering init's mount namespace..."
-        exec "$NSENTER" -t 1 -m -- "$SH_BIN" "$SELF"
+        exec env _ELEVATED=1 "$NSENTER" -t 1 -m -- "$SH_BIN" "$SELF"
     fi
 
     die "Cannot access $SRC. Need nsenter; run: pkg install util-linux"
