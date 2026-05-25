@@ -1,5 +1,3 @@
-# STABLE VERSION 2
-
 #!/data/data/com.termux/files/usr/bin/bash
 #
 # extract-tiktok-effect.sh
@@ -59,19 +57,19 @@ die()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 # us into init's mount namespace where /data/data/<other-app> is visible.
 if [ ! -d "$SRC" ]; then
     NSENTER="$(command -v nsenter || true)"
-    BASH_BIN="$(command -v bash)"
+    SH_BIN="$(command -v sh)"
 
     if [ "$(id -u)" -ne 0 ]; then
         [ -n "$NSENTER" ] || die "nsenter not installed. Run: pkg install util-linux"
         log "Re-executing under su + nsenter (via stdin, bstk/su has no -c)..."
         exec su <<EOF
-exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' KEEP_RESULTS='$KEEP_RESULTS' "$BASH_BIN" '$SELF'
+exec "$NSENTER" -t 1 -m -- env SRC='$SRC' REMOTE='$REMOTE' WORK_DIR='$WORK_DIR' KEEP_LOCAL='$KEEP_LOCAL' KEEP_RESULTS='$KEEP_RESULTS' "$SH_BIN" '$SELF'
 EOF
     fi
 
     if [ -n "$NSENTER" ]; then
         log "Already root, entering init's mount namespace..."
-        exec "$NSENTER" -t 1 -m -- "$BASH_BIN" "$SELF"
+        exec "$NSENTER" -t 1 -m -- "$SH_BIN" "$SELF"
     fi
 
     die "Cannot access $SRC. Need nsenter; run: pkg install util-linux"
